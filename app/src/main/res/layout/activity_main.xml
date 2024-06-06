@@ -18,6 +18,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.slider.RangeSlider
+        android:id="@+id/timeSlider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:valueFrom="0.0"

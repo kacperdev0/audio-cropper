@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.media.MediaPlayer
+import com.google.android.material.slider.RangeSlider
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,6 +22,7 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var urlDisplay: TextView
     lateinit var mediaPlayer: MediaPlayer
+    lateinit var timeSlider: RangeSlider
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +38,21 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.selectFileButton).setOnClickListener {
             checkPermissionAndSelectFile()
+        }
+
+        timeSlider = findViewById<RangeSlider>(R.id.timeSlider)
+
+        timeSlider.addOnChangeListener { rangeSlider, value, fromUser ->
+            run {
+                println(value.toString())
+            }
+        }
+
+        timeSlider.setLabelFormatter {value ->
+            val duration = value.toInt()
+            val minutes = (duration / 60).toInt()
+            val seconds = duration % 60
+            String.format("%02d", minutes) + ":" + String.format("%02d", seconds)
         }
     }
 
@@ -53,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         selectedUri?.let {
             mediaPlayer.setDataSource(applicationContext, selectedUri)
             mediaPlayer.prepare()
+            timeSlider.valueTo = (mediaPlayer.duration / 1000).toFloat()
         }
     }
 
