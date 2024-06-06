@@ -7,15 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/filePath"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Path"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/selectFileButton" />
-
     <Button
         android:id="@+id/selectFileButton"
         android:layout_width="wrap_content"
@@ -25,5 +16,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.slider.RangeSlider
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:valueFrom="0.0"
+        android:valueTo="100.0"
+        app:values="@array/initial_slider_values"
+        app:layout_constraintTop_toBottomOf="@+id/selectFileButton">
+    </com.google.android.material.slider.RangeSlider>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
