@@ -14,6 +14,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.media.MediaPlayer
+import android.os.Handler
+import android.os.Looper
 import com.google.android.material.slider.RangeSlider
 
 
@@ -38,6 +40,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.selectFileButton).setOnClickListener {
             checkPermissionAndSelectFile()
+        }
+
+        findViewById<Button>(R.id.playButton).setOnClickListener {
+            playPreview()
         }
 
         timeSlider = findViewById<RangeSlider>(R.id.timeSlider)
@@ -72,6 +78,22 @@ class MainActivity : AppCompatActivity() {
             mediaPlayer.prepare()
             timeSlider.valueTo = (mediaPlayer.duration / 1000).toFloat()
         }
+    }
+
+    private fun playPreview() {
+        val startSec = timeSlider.values[0].toInt() * 1000
+
+        mediaPlayer.seekTo(startSec)
+        mediaPlayer.start()
+
+        println((timeSlider.values[1].toInt() * 1000) - startSec)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (mediaPlayer.isPlaying) {
+                mediaPlayer.stop()
+                mediaPlayer.reset()
+            }
+        }, (((timeSlider.values[1].toInt() * 1000) - startSec).toLong()))
     }
 
     private fun checkPermissionAndSelectFile() {
