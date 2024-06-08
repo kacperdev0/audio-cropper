@@ -23,6 +23,8 @@
         android:layout_height="wrap_content"
         android:valueFrom="0.0"
         android:valueTo="100.0"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/selectFileButton"
         app:values="@array/initial_slider_values"></com.google.android.material.slider.RangeSlider>
 
