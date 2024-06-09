@@ -1,33 +1,29 @@
 package com.example.audiocropper
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaCodec
-import android.media.MediaExtractor
-import android.media.MediaMuxer
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.provider.MediaStore
 import android.widget.Button
-import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import android.media.MediaPlayer
-import android.os.Environment
-import android.os.Handler
-import android.os.Looper
+import androidx.documentfile.provider.DocumentFile
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.ReturnCode
 import com.google.android.material.slider.RangeSlider
 import java.io.File
-import java.nio.ByteBuffer
-import com.mpatric.mp3agic.Mp3File
-import com.mpatric.mp3agic.InvalidDataException
-import com.mpatric.mp3agic.UnsupportedTagException
 import java.io.FileOutputStream
-import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
@@ -50,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         mediaPlayer = MediaPlayer()
 
         findViewById<Button>(R.id.selectFileButton).setOnClickListener {
-            if (checkPermissionAndSelectFile()) {
+            if (checkPermissions()) {
                 audioFilePicker()
             }
         }
@@ -60,69 +56,117 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.saveButton).setOnClickListener {
-
+            if (checkPermissions()) {
+                cutAudio()
+            }
         }
 
-        timeSlider = findViewById<RangeSlider>(R.id.timeSlider)
+        timeSlider = findViewById(R.id.timeSlider)
 
-        timeSlider.addOnChangeListener { rangeSlider, value, fromUser ->
+        timeSlider.addOnChangeListener { _, value, _ ->
             run {
                 println(value.toString())
             }
         }
 
-        timeSlider.setLabelFormatter {value ->
+        timeSlider.setLabelFormatter { value ->
             val duration = value.toInt()
-            val minutes = (duration / 60).toInt()
+            val minutes = duration / 60
             val seconds = duration % 60
             String.format("%02d", minutes) + ":" + String.format("%02d", seconds)
         }
     }
 
+    private fun cutAudio() {
+        val inputFilePath = getFileAbsolutePath(url)
+        println(inputFilePath)
+        val outputFilePath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "output.mp3").absolutePath
+        val startSeconds = timeSlider.values[0].toInt()
+        val durationSeconds = timeSlider.values[1].toInt() - startSeconds
+
+        val command = "-i '$inputFilePath' -ss $startSeconds -t $durationSeconds -c copy '$outputFilePath'"
+
+        FFmpegKit.executeAsync(command) { session ->
+            val returnCode = session.returnCode
+
+            if (ReturnCode.isSuccess(returnCode)) {
+                // SUCCESS
+                println("Command succeeded with return code ${returnCode}.")
+            } else if (ReturnCode.isCancel(returnCode)) {
+                // CANCEL
+                println("Command cancelled with return code ${returnCode}.")
+            } else {
+                // FAILURE
+                println("Command failed with return code ${returnCode}.")
+            }
+        }
+    }
+
+
     private fun audioFilePicker() {
-        val chooseFile = Intent(Intent.ACTION_GET_CONTENT)
-        chooseFile.setType("audio/mpeg")
-        val  getFile = Intent.createChooser(chooseFile, "Select audio file")
-        startActivityForResult(getFile, 1)
+        val chooseFile = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "audio/mpeg"
+        }
+        val getFile = Intent.createChooser(chooseFile, "Select audio file")
+        startActivityForResult(getFile, PICK_FILE_REQ_CODE)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
-        val selectedUri: Uri? = data?.data
-        selectedUri?.let {
-            url = selectedUri
-            mediaPlayer.setDataSource(applicationContext, selectedUri)
-            mediaPlayer.prepare()
-            timeSlider.valueTo = (mediaPlayer.duration / 1000).toFloat()
+        println( data.toString())
+        if (requestCode == PICK_FILE_REQ_CODE && resultCode == RESULT_OK) {
+            data?.data?.let {
+                url = it
+                mediaPlayer.setDataSource(applicationContext, it)
+                mediaPlayer.prepare()
+                timeSlider.valueTo = (mediaPlayer.duration / 1000).toFloat()
+            }
         }
     }
 
     private fun playPreview() {
-        val startSec = timeSlider.values[0].toInt() * 1000
+        val startSec = (timeSlider.values[0] * 1000).toInt()
 
         mediaPlayer.seekTo(startSec)
         mediaPlayer.start()
 
-        println((timeSlider.values[1].toInt() * 1000) - startSec)
-
         Handler(Looper.getMainLooper()).postDelayed({
             if (mediaPlayer.isPlaying) {
-                mediaPlayer.stop()
-                mediaPlayer.reset()
+                mediaPlayer.pause()
+                mediaPlayer.seekTo(startSec)
             }
-        }, (((timeSlider.values[1].toInt() * 1000) - startSec).toLong()))
+        }, (timeSlider.values[1] * 1000 - startSec).toLong())
     }
 
-    private fun checkPermissionAndSelectFile(): Boolean {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 2)
-            return false
+    private fun checkPermissions(): Boolean {
+        val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        val neededPermissions = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        return if (neededPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, neededPermissions.toTypedArray(), 1)
+            false
         } else {
-            return true
+            true
         }
     }
+    fun getFileAbsolutePath(uri: Uri): String? {
+        var filePath: String? = null
+        val cursor = contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val columnIndex = it.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+                val fileName = it.getString(columnIndex)
+                val file = File(applicationContext.cacheDir, fileName)
+                filePath = file.absolutePath
+                val inputStream = contentResolver.openInputStream(uri)
+                val outputStream = FileOutputStream(file)
+                inputStream?.copyTo(outputStream)
+                inputStream?.close()
+                outputStream.close()
+            }
+        }
+        return filePath
+    }
 }
-

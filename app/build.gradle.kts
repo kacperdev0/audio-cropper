@@ -42,7 +42,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation("com.google.android.material:material:1.4.0")
-    implementation("com.mpatric:mp3agic:0.9.1")
+    implementation("com.arthenica:ffmpeg-kit-full:4.5")
     implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
