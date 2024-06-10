@@ -28,8 +28,10 @@ import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
     var PICK_FILE_REQ_CODE = 1
+    var SAVE_FILE_REQ_CODE = 2
 
     lateinit var url: Uri
+    lateinit var saveUrl: Uri
     lateinit var mediaPlayer: MediaPlayer
     lateinit var timeSlider: RangeSlider
 
@@ -84,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         val startSeconds = timeSlider.values[0].toInt()
         val durationSeconds = timeSlider.values[1].toInt() - startSeconds
 
-        val command = "-i '$inputFilePath' -ss $startSeconds -t $durationSeconds -c copy '$outputFilePath'"
+        val command = " -y -i '$inputFilePath' -ss $startSeconds -t $durationSeconds -c copy '$outputFilePath'"
 
         FFmpegKit.executeAsync(command) { session ->
             val returnCode = session.returnCode
@@ -113,14 +115,25 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        println( data.toString())
-        if (requestCode == PICK_FILE_REQ_CODE && resultCode == RESULT_OK) {
-            data?.data?.let {
-                url = it
-                mediaPlayer.setDataSource(applicationContext, it)
-                mediaPlayer.prepare()
-                timeSlider.valueTo = (mediaPlayer.duration / 1000).toFloat()
+        try {
+            timeSlider.setValues(0.0F, 1.0F)
+            if (requestCode == PICK_FILE_REQ_CODE && resultCode == RESULT_OK) {
+                data?.data?.let {
+                    url = it
+                    mediaPlayer.setDataSource(applicationContext, it)
+                    mediaPlayer.prepare()
+                    timeSlider.valueTo = (mediaPlayer.duration / 1000).toFloat()
+                }
             }
+            if (requestCode == SAVE_FILE_REQ_CODE && resultCode == RESULT_OK) {
+                data?.data?.let {
+                    saveUrl = it
+                    cutAudio()
+                }
+            }
+        } catch (e: IllegalStateException) {
+            e.printStackTrace()
+            // Handle the exception or log it appropriately
         }
     }
 
