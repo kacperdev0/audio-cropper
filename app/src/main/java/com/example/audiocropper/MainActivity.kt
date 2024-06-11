@@ -57,6 +57,10 @@ class MainActivity : AppCompatActivity() {
             playPreview()
         }
 
+        findViewById<Button>(R.id.pauseButton).setOnClickListener {
+            handlePause()
+        }
+
         findViewById<Button>(R.id.saveButton).setOnClickListener {
             if (checkPermissions()) {
                 cutAudio()
@@ -76,6 +80,14 @@ class MainActivity : AppCompatActivity() {
             val minutes = duration / 60
             val seconds = duration % 60
             String.format("%02d", minutes) + ":" + String.format("%02d", seconds)
+        }
+    }
+
+    private fun handlePause() {
+        if (mediaPlayer.isPlaying) {
+            mediaPlayer.pause()
+        } else {
+            mediaPlayer.start()
         }
     }
 
@@ -116,13 +128,13 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         try {
-            timeSlider.setValues(0.0F, 1.0F)
             if (requestCode == PICK_FILE_REQ_CODE && resultCode == RESULT_OK) {
                 data?.data?.let {
                     url = it
                     mediaPlayer.setDataSource(applicationContext, it)
                     mediaPlayer.prepare()
-                    timeSlider.valueTo = (mediaPlayer.duration / 1000).toFloat()
+                    timeSlider.valueTo = mediaPlayer.duration / 1000F
+                    timeSlider.setValues(0.0F, (mediaPlayer.duration / 1000F))
                 }
             }
             if (requestCode == SAVE_FILE_REQ_CODE && resultCode == RESULT_OK) {
@@ -164,7 +176,7 @@ class MainActivity : AppCompatActivity() {
             true
         }
     }
-    fun getFileAbsolutePath(uri: Uri): String? {
+    private fun getFileAbsolutePath(uri: Uri): String? {
         var filePath: String? = null
         val cursor = contentResolver.query(uri, null, null, null, null)
         cursor?.use {
