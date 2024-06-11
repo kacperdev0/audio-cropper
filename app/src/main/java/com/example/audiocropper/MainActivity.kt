@@ -71,7 +71,9 @@ class MainActivity : AppCompatActivity() {
 
         timeSlider.addOnChangeListener { _, value, _ ->
             run {
-                println(value.toString())
+                if (mediaPlayer.isPlaying) {
+                    playPreview()
+                }
             }
         }
 
