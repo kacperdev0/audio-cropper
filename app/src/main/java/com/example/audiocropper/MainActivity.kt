@@ -201,6 +201,13 @@ class MainActivity : AppCompatActivity() {
         showPointer()
     }
 
+    private fun getSaveUri() {
+        val chooseDestination = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            addCategory(Intent.CATEGORY_DEFAULT)
+        }
+        startActivityForResult(chooseDestination, SAVE_FILE_REQ_CODE)
+    }
+
     private fun checkPermissions(): Boolean {
         val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
         val neededPermissions = permissions.filter {

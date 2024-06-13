@@ -5,6 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:foregroundTint="@color/mainColor"
     tools:context=".MainActivity">
 
     <Button
@@ -16,18 +17,25 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:backgroundTint="@color/mainColor"/>
 
     <com.google.android.material.slider.RangeSlider
         android:id="@+id/timeSlider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/mainColor"
+        android:foregroundTint="@color/mainColor"
         android:valueFrom="0.0"
         android:valueTo="100.0"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:values="@array/initial_slider_values"></com.google.android.material.slider.RangeSlider>
+        app:values="@array/initial_slider_values"
+        app:thumbColor="@color/mainColor"
+        app:tickColor="@color/mainColor"
+        app:trackColorActive="@color/mainColor"
+        app:trackColorInactive="#a7bada" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -43,6 +51,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:backgroundTint="@color/mainColor"
             android:text="Play" />
 
         <View
@@ -56,6 +65,7 @@
             android:id="@+id/pauseButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/mainColor"
             android:text="Pause" />
 
         <View
@@ -69,6 +79,7 @@
             android:id="@+id/saveButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/mainColor"
             android:text="Save" />
     </LinearLayout>
 
@@ -82,5 +93,6 @@
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/selectFileButton" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
