@@ -177,12 +177,12 @@ class MainActivity : AppCompatActivity() {
                 currentPreviewTime += 1
 
                 if (currentPreviewTime <= endSec) {
-                    handler.postDelayed(this, 1000) // Schedule the next update after 1 second
+                    handler.postDelayed(this, 1000)
                 }
             }
         }
 
-        handler.post(updateTime) // Start the initial update
+        handler.post(updateTime) 
     }
 
     private fun playPreview() {
