@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.widget.Button
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -24,6 +25,7 @@ import com.arthenica.ffmpegkit.ReturnCode
 import com.google.android.material.slider.RangeSlider
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.random.Random
 
 
 class MainActivity : AppCompatActivity() {
@@ -32,8 +34,14 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var url: Uri
     lateinit var saveUrl: Uri
+
+    val handler = Handler(Looper.getMainLooper())
     lateinit var mediaPlayer: MediaPlayer
+
     lateinit var timeSlider: RangeSlider
+    lateinit var previewTimeTextView: TextView
+
+    var currentPreviewTime = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +54,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         mediaPlayer = MediaPlayer()
+
+        timeSlider = findViewById(R.id.timeSlider)
+        previewTimeTextView = findViewById(R.id.textView)
 
         findViewById<Button>(R.id.selectFileButton).setOnClickListener {
             if (checkPermissions()) {
@@ -67,7 +78,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        timeSlider = findViewById(R.id.timeSlider)
 
         timeSlider.addOnChangeListener { _, value, _ ->
             run {
@@ -79,9 +89,7 @@ class MainActivity : AppCompatActivity() {
 
         timeSlider.setLabelFormatter { value ->
             val duration = value.toInt()
-            val minutes = duration / 60
-            val seconds = duration % 60
-            String.format("%02d", minutes) + ":" + String.format("%02d", seconds)
+            formatTime(duration)
         }
     }
 
@@ -91,6 +99,12 @@ class MainActivity : AppCompatActivity() {
         } else {
             mediaPlayer.start()
         }
+    }
+
+    private fun formatTime(duration: Int): String {
+        val minutes = duration / 60
+        val seconds = duration % 60
+        return String.format("%02d", minutes) + ":" + String.format("%02d", seconds)
     }
 
     private fun cutAudio() {
@@ -151,9 +165,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showPointer() {
+        handler.removeCallbacksAndMessages(null) // Clear all previous callbacks
+
+        currentPreviewTime = (timeSlider.values[0]).toInt()
+        val endSec = (timeSlider.values[1]).toInt()
+
+        val updateTime = object : Runnable {
+            override fun run() {
+                previewTimeTextView.text = formatTime(currentPreviewTime)
+                currentPreviewTime += 1
+
+                if (currentPreviewTime <= endSec) {
+                    handler.postDelayed(this, 1000) // Schedule the next update after 1 second
+                }
+            }
+        }
+
+        handler.post(updateTime) // Start the initial update
+    }
+
     private fun playPreview() {
         val startSec = (timeSlider.values[0] * 1000).toInt()
-
+        val endSec = (timeSlider.values[1] * 1000).toInt()
         mediaPlayer.seekTo(startSec)
         mediaPlayer.start()
 
@@ -162,7 +196,9 @@ class MainActivity : AppCompatActivity() {
                 mediaPlayer.pause()
                 mediaPlayer.seekTo(startSec)
             }
-        }, (timeSlider.values[1] * 1000 - startSec).toLong())
+        }, (endSec - startSec).toLong())
+
+        showPointer()
     }
 
     private fun checkPermissions(): Boolean {
